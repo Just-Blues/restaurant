@@ -48,9 +48,46 @@ void Restaurant::printRestaurant()
 void Restaurant::addTable(int chairs)
 {
 	Table* aux = new Table(chairs);
-	this->getWaiterHead()->waiter->assignTable(aux);
-	numberOfTables++;
-	this->managerIntervention();
+	waiterNode* ptr = Waiterhead;
+	if (numberOfWaiters == 1)
+	{
+		Waiterhead->waiter->assignTable(aux);
+	}
+	else if (numberOfWaiters == 2)
+	{
+		if (ptr->waiter->getAssigned() <= ptr->next->waiter->getAssigned())
+		{
+			ptr->waiter->assignTable(aux);
+		}
+		else
+		{
+			ptr->next->waiter->assignTable(aux);
+		}
+		numberOfTables++;
+	}
+	else
+	{
+		if (ptr->waiter->getAssigned() < ptr->next->waiter->getAssigned() || ptr->waiter->getAssigned() == ptr->next->waiter->getAssigned())
+		{
+			ptr->waiter->assignTable(aux);
+		}
+		else
+		{
+			while (ptr->next)
+			{
+				if (ptr->waiter->getAssigned() > ptr->next->waiter->getAssigned())
+				{
+					ptr = ptr->next;
+				}
+				else
+				{
+					break;
+				}
+			}
+			ptr->waiter->assignTable(aux);
+		}
+		numberOfTables++;
+	}
 }
 /*
 void Restaurant::serveCustomers()
@@ -90,7 +127,10 @@ void Restaurant::fireWaiter(const char* nam)
 		temp = Waiterhead;
 		Waiterhead = Waiterhead->next;
 		//temp->waiter->removeAllTables();
+		numberOfTables = numberOfTables - temp->waiter->getAssigned();
 		delete temp;
+		numberOfWaiters--;
+		return;
 	}
 	while (etr->waiter->getName() != nam)
 	{
@@ -100,6 +140,7 @@ void Restaurant::fireWaiter(const char* nam)
 		curr = curr->next;
 	}
 	prev->next = curr->next;
+	numberOfTables = numberOfTables - etr->waiter->getAssigned();
 	numberOfWaiters--;
 }
 
@@ -190,77 +231,41 @@ void Restaurant::managerIntervention()
 void Restaurant::managerFireWaiter(const char* nam)
 {
 	waiterNode* ptr = Waiterhead;
+	if (numberOfWaiters == 1)
+	{
+		cout << "Can't fire last waiter, restaurant won't operate" << endl;
+		return;
+	}
+
 	if (numberOfWaiters <= 2)
 	{
-		cout << "Restaurant can't operate" << endl;
-		Waiterhead->next->waiter->removeAllTables();
-		this->fireWaiter(Waiterhead->next->waiter->getName());
-		Waiterhead->waiter->removeAllTables();
-		this->fireWaiter(Waiterhead->waiter->getName());
+		cout << "WARNING: Restaurant will be left with only one waiter" << endl;
+
 	}
-	else
+
+	while (ptr)
 	{
-		while (ptr)
+		if (!strcmp(ptr->waiter->getName(), nam))
 		{
-			if (!strcmp(ptr->waiter->getName(), nam))
-			{
-				break;
-			}
-			ptr = ptr->next;
+			break;
 		}
-		waiterNode* etr = Waiterhead;
-		Table* aux = new Table();
-		int counter = ptr->waiter->getAssigned();
-		while (counter)
-		{
-			//cout << "start of loop: "<<counter <<endl;
-			if (etr->waiter == ptr->waiter)
-			{
-				//cout << "check"<<endl;
-				if (etr->next == NULL)
-				{
-					etr = Waiterhead;
-				}
-				etr = etr->next;
-				//etr->waiter->printWaiter();
-			}
-			aux = ptr->waiter->findFree();
-
-			if (aux->getisFree() == true)
-			{
-				//cout << "free"<<endl;
-				ptr->waiter->removeAssignedTable();
-				etr->waiter->assignTable(aux);
-				etr->waiter->changePriority();
-				counter--;
-			}
-			else if (aux->getisFree() == false)
-			{
-				//cout << "occupied"<<endl;
-				ptr->waiter->removeLast();
-				etr->waiter->assignTable(aux);
-				etr->waiter->changePriority();
-				counter--;
-			}
-			//cout << "end of loop: "<<counter <<endl;
-			//etr->waiter->printWaiter();
-			if (etr->next == NULL)
-			{
-				//cout << "NULL"<<endl;
-				etr = Waiterhead;
-			}
-			else
-			{
-				//cout << "FULL"<<endl;
-				etr = etr->next;
-				//cout << "kek"<<endl;
-			}
-
-			//etr->waiter->printWaiter();
-			//cout << "problem?" <<endl;
-		}
-		this->fireWaiter(ptr->waiter->getName());
+		ptr = ptr->next;
 	}
+
+	if (!ptr)
+	{
+		cout << "Waiter not found" << endl;
+		return;
+	}
+	tableNode* aux = new tableNode;
+	aux = ptr->waiter->getHead();
+	fireWaiter(ptr->waiter->getName());
+	while (aux)
+	{
+		addTable(aux->table->getSeats());
+		aux = aux->next;
+	}
+	delete aux;
 }
 
 //***********************************************************************************************************************
@@ -269,27 +274,25 @@ void Restaurant::managerFireWaiter(const char* nam)
 
 void Restaurant::managerHireWaiter(const char* nam)
 {
-	this->hireWaiter(nam);
+	hireWaiter(nam);
 	waiterNode* ptr = Waiterhead;
+	waiterNode* etr = Waiterhead->next;
 	while (ptr->waiter->getName() != nam)
 	{
 		ptr = ptr->next;
 	}
-	waiterNode* etr = Waiterhead->next;
-	Table* aux = new Table();
-	while (etr)
+	int tables_to_assign = numberOfTables / numberOfWaiters;
+	for (int i = 0; i < tables_to_assign; i++)
 	{
-		aux = etr->waiter->findFree();
-		if (aux->getisFree() == true)
-		{
-			etr->waiter->removeAssignedTable();
-		}
-		else if (aux->getisFree() == false)
-		{
-			etr->waiter->removeLast();
-		}
+		Table* aux = new Table;
+		aux = etr->waiter->getLast();
 		ptr->waiter->assignTable(aux);
+		etr->waiter->removeLast();
 		etr = etr->next;
+		if (!etr)
+		{
+			etr = Waiterhead->next;
+		}
 	}
 	ptr->waiter->changePriority();
 }
