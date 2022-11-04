@@ -85,6 +85,7 @@ public:
 	void removeLast();
 	void printWaiter();
 	Table* findFree();//or return last possible
+	Table* getLast();
 	bool isInTheZone(Table* tabl);
 	int getAssigned() { return numberOfAssignedTables; };
 	tableNode* getHead() { return head; };
@@ -118,16 +119,17 @@ public:
 	void removeDish(const char* nam);
 	void printMenu();
 	void addTable(int chairs);
+	//bool reassignTable(int chairs);//Might be usefull
 	void hireWaiter(const char* nam);
 	void fireWaiter(const char* nam);
-	void managerIntervention();
+	void managerIntervention(); //USELESS
 	void managerFireWaiter(const char* nam);
 	void managerHireWaiter(const char* nam);
 	//void serveCustomers();//THIS IS PROBLEMATIC DOESN'T WORK DON'T TOUCH IT
 	void serveCustomers(const char* nam);
 	int removeTable();
 	void printRestaurant();
-	bool isAssignedEqually();
+	bool isAssignedEqually();//USELESS
 	int getNumberOfClients() { return numberOfClients; };
 	menuNode* getMenuhead() { return Menuhead; };
 	waiterNode* getWaiterHead() { return Waiterhead; };

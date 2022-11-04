@@ -125,7 +125,7 @@ void Waiter::changePriority()
 Table* Waiter::findFree() //or return last possible
 {
 	tableNode* etr = head;
-	Table* aux = NULL;
+	Table* aux = new Table;
 	while (etr)
 	{
 		if (etr->table->getisFree())
@@ -141,6 +141,26 @@ Table* Waiter::findFree() //or return last possible
 		etr = etr->next;
 	}
 	aux = etr->table;
+	return aux;
+}
+
+Table* Waiter::getLast()
+{
+	Table* aux = new Table;
+	tableNode* ptr = head;
+	while (ptr)
+	{
+		if (!ptr->next)
+		{
+			ptr = ptr->next;
+		}
+		else
+		{
+			aux = ptr->table;
+			break;
+		}
+	}
+
 	return aux;
 }
 
